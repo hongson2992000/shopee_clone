@@ -1,5 +1,7 @@
 import React from 'react'
+import useRouteElement from './useRouteElement'
 
 export default function App() {
-  return <div>App</div>
+  const routeElement = useRouteElement()
+  return <div>{routeElement}</div>
 }

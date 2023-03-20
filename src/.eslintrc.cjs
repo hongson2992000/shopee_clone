@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path')
 module.exports = {
     extends: [
@@ -8,7 +9,6 @@ module.exports = {
         'plugin:import/recommended',
         'plugin:jsx-a11y/recommended',
         'plugin:@typescript-eslint/recommended',
-        'plugin:@typescript-eslint/recommended-requiring-type-checking',
         // Disable các rule mà eslint xung đột với prettier.
         // Để cái này ở dưới để nó override các rule phía trên!.
         'eslint-config-prettier',
@@ -51,6 +51,6 @@ module.exports = {
                 printWidth: 120,
                 jsxSingleQuote: true
             }
-        ],
+        ]
     }
 }
