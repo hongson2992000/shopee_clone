@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Input from 'src/components/Input'
 import { schema, LoginSchema, loginSchema } from 'src/utils/rule'
 import { useMutation } from '@tanstack/react-query'
-import { login } from 'src/apis/auth.api'
+import authApi from 'src/apis/auth.api'
 import { omit } from 'lodash'
 import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 import { ErrorResponse } from 'src/types/utils.type'
@@ -28,7 +28,7 @@ export default function Login() {
   const value = watch()
   console.log(errors, value)
   const loginAccount = useMutation({
-    mutationFn: (body: Omit<FormData, 'confirm_password'>) => login(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.login(body)
   })
   const onSubmit = handleSubmit((data) => {
     loginAccount.mutate(data, {
