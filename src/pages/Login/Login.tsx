@@ -4,7 +4,7 @@ import React, { useContext } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import Input from 'src/components/Input'
-import { schema, LoginSchema, loginSchema } from 'src/utils/rule'
+import { schema, LoginSchema, loginSchema, Schema } from 'src/utils/rule'
 import { useMutation } from '@tanstack/react-query'
 import authApi from 'src/apis/auth.api'
 import { omit } from 'lodash'
@@ -12,7 +12,7 @@ import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 import { ErrorResponse } from 'src/types/utils.type'
 import { AppContext } from 'src/contexts/app.context'
 import Button from 'src/components/Button'
-type FormData = LoginSchema
+type FormData = Pick<Schema, 'email' | 'password'>
 export default function Login() {
   const { setIsAuthenticated, setProfile } = useContext(AppContext)
   const navigate = useNavigate()
