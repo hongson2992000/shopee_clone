@@ -1,12 +1,33 @@
 /* eslint-disable import/no-unresolved */
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, createSearchParams, useNavigate } from 'react-router-dom'
 import authApi from 'src/apis/auth.api'
+import { useForm } from 'react-hook-form'
 import path from 'src/constants/path'
 import { AppContext } from 'src/contexts/app.context'
 import Popover from '../Popover'
+import useQueryConfig from 'src/hooks/useQueryConfig'
+import { Schema, schema } from 'src/utils/rule'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { omit } from 'lodash'
+import { purchasesStatus } from 'src/constants/purchase'
+import purchaseApi from 'src/apis/purchase.api'
+import noproduct from 'src/assets/images/noproduct.png'
+import { formatCurrency } from 'src/utils/utils'
+
+type FormData = Pick<Schema, 'name'>
+const nameSchema = schema.pick(['name'])
+const MAX_PURCHASE = 5
 export default function Header() {
+  const queryConfig = useQueryConfig()
+  const navigate = useNavigate()
+  const { register, handleSubmit } = useForm<FormData>({
+    defaultValues: {
+      name: ''
+    },
+    resolver: yupResolver(nameSchema)
+  })
   const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
@@ -15,9 +36,23 @@ export default function Header() {
       setProfile(null)
     }
   })
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchasesStatus.inCart }],
+    queryFn: () => purchaseApi.getPurchases({ status: purchasesStatus.inCart })
+  })
+  const purchsesInCart = purchasesInCartData?.data.data
   const handleLogout = () => {
     logoutMutation.mutate()
   }
+  const onSubmitSearch = handleSubmit((data) => {
+    const config = queryConfig.order
+      ? omit({ ...queryConfig, name: data.name }, ['order', 'sort_by'])
+      : { ...queryConfig, name: data.name }
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(config).toString()
+    })
+  })
   return (
     <div className='bg-[linear-gradient(-180deg,#f53d2d,#f63)] pb-5 pt-2 text-white'>
       <div className='container'>
@@ -118,13 +153,13 @@ export default function Header() {
               </g>
             </svg>
           </Link>
-          <form className='col-span-9'>
+          <form className='col-span-9' onSubmit={onSubmitSearch}>
             <div className='flex rounded-sm bg-white p-1'>
               <input
                 type='text'
-                name='search'
                 className='flex-grow border-none bg-transparent px-3 py-2 text-black outline-none'
                 placeholder='FREE SHIP ĐƠN TỪ 0Đ'
+                {...register('name')}
               />
               <button className='flex-shrink-0 rounded-sm bg-orange py-2 px-6 hover:opacity-90'>
                 <svg
@@ -151,54 +186,68 @@ export default function Header() {
               className='ml-6 flex cursor-pointer items-center py-1 hover:text-gray-300'
               renderPopover={
                 <div className='relative max-w-[400px] rounded-sm border border-gray-200 bg-white text-sm shadow-md'>
-                  <div className='p-2'>
-                    <div className='capitalize text-gray-400'>Sản phẩm mới thêm</div>
+                  {purchsesInCart ? (
+                    <div className='p-2'>
+                      <div className='capitalize text-gray-400'>Sản phẩm mới thêm</div>
 
-                    <div className='mt-5'>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/sg-11134201-22090-cq3q9alek1hvda_tn'
-                            alt='img'
-                            className='h-11 w-11 object-cover'
-                          />
+                      <div className='mt-5'>
+                        {purchsesInCart.slice(0, MAX_PURCHASE).map((purchase) => {
+                          return (
+                            <div className='mt-2 flex py-2 hover:bg-gray-100' key={purchase._id}>
+                              <div className='flex-shrink-0'>
+                                <img
+                                  src={purchase.product.image}
+                                  alt={purchase.product.name}
+                                  className='h-11 w-11 object-cover'
+                                />
+                              </div>
+                              <div className='ml-2 flex-grow overflow-hidden'>
+                                <div className='truncate'>{purchase.product.name}</div>
+                              </div>
+                              <div className='ml-2 flex-shrink-0'>
+                                <span className='text-orange'>{formatCurrency(purchase.product.price)}</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {/* <div className='mt-5'>
+                        <div className='mt-4 flex'>
+                          <div className='flex-shrink-0'>
+                            <img
+                              src='https://down-vn.img.susercontent.com/file/sg-11134201-22090-cq3q9alek1hvda_tn'
+                              alt='img'
+                              className='h-11 w-11 object-cover'
+                            />
+                          </div>
+                          <div className='ml-2 flex-grow'>
+                            <div className='truncate'>BALO TTWN BEAR TN2443 chính hãng</div>
+                          </div>
+                          <div className='ml-2 flex-shrink-0'>
+                            <span className='text-orange'>500000</span>
+                          </div>
                         </div>
-                        <div className='ml-2 flex-grow'>
-                          <div className='truncate'>BALO TTWN BEAR TN2443 chính hãng</div>
+                      </div> */}
+                      <div className='mt-6 flex items-center justify-between'>
+                        <div className='text-xs capitalize text-gray-500'>
+                          {purchsesInCart.length > MAX_PURCHASE ? purchsesInCart.length - MAX_PURCHASE : ''} Thêm hàng
+                          vào giỏ
                         </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>500000</span>
-                        </div>
+                        <button className='rounded-sm bg-orange px-4 py-2 capitalize text-white hover:bg-opacity-80'>
+                          Xem giỏ hàng
+                        </button>
                       </div>
                     </div>
-                    <div className='mt-5'>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/sg-11134201-22090-cq3q9alek1hvda_tn'
-                            alt='img'
-                            className='h-11 w-11 object-cover'
-                          />
-                        </div>
-                        <div className='ml-2 flex-grow'>
-                          <div className='truncate'>BALO TTWN BEAR TN2443 chính hãng</div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>500000</span>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className='flex h-[300px] w-[300px] items-center justify-center p-2'>
+                      <img src={noproduct} alt='no purchase' className='h-24 w-24' />
+                      <div className='mt-3 capitalize'>Chưa có sản phẩm</div>
                     </div>
-                    <div className='mt-6 flex items-center justify-between'>
-                      <div className='text-xs capitalize'>Thêm hàng vào giỏ</div>
-                      <button className='rounded-sm bg-orange px-4 py-2 capitalize text-white hover:bg-opacity-80'>
-                        Xem giỏ hàng
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               }
             >
-              <Link to='/'>
+              <Link to='/' className='relative'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   fill='none'
@@ -213,6 +262,9 @@ export default function Header() {
                     d='M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'
                   />
                 </svg>
+                <span className='absolute top-[-5px] left-[17px] rounded-full bg-white px-2 py-1 px-[9px] py-[1px] text-xs text-orange'>
+                  {purchsesInCart?.length}
+                </span>
               </Link>
             </Popover>
           </div>

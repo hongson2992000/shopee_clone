@@ -1,4 +1,5 @@
 const path = {
+  productDetail: ':nameId',
   home: '/',
   profile: '/profile',
   login: '/login',

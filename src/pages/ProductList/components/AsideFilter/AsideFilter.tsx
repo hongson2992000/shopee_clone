@@ -8,7 +8,7 @@ import Input from 'src/components/Input'
 import InputNumber from 'src/components/InputNumber'
 import path from 'src/constants/path'
 import { Category } from 'src/types/category.type'
-import { QueryConfig } from '../../ProductList'
+import { QueryConfig } from 'src/hooks/useQueryConfig'
 import { Schema, schema } from 'src/utils/rule'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { NoUndefinedField } from 'src/types/utils.type'
@@ -73,7 +73,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
       </Link>
       <div className='my-4 h-[1px] bg-gray-300' />
       <ul>
-        {categories.map((categoryItem) => {
+        {categories.map((categoryItem, index) => {
           const isActive = category === categoryItem._id
           return (
             <li className='py-2 pl-2' key={categoryItem._id}>
